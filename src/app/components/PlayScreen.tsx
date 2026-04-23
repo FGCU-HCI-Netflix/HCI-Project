@@ -86,6 +86,11 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
   const togglePlay = () => {
     if (!videoRef.current) return;
     if (videoRef.current.paused) {
+      // If video has ended or reached the end, restart from beginning
+      if (videoRef.current.currentTime >= videoRef.current.duration) {
+        videoRef.current.currentTime = 0;
+        setCurrentTime(0);
+      }
       videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
     } else {
       videoRef.current.pause();
