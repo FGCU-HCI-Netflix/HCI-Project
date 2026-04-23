@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
+import { LayoutGrid, List } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { ContinueWatching } from './components/ContinueWatching';
@@ -11,6 +12,7 @@ import { KeyboardHelp } from './components/KeyboardHelp';
 import { Onboarding } from './components/Onboarding';
 import { useToast } from './components/Toast';
 import type { ContentItem, WatchProgress } from './types';
+import { LOCAL_ASSET_CONTENT } from './utils/localAssets';
 
 // ── Mock Content Data ────────────────────────────────────────────────────────
 
@@ -412,7 +414,9 @@ const SERIES: ContentItem[] = [
   },
 ];
 
-export const ALL_CONTENT: ContentItem[] = [...MOVIES, ...SERIES];
+const LIBRARY_MOVIES: ContentItem[] = [...LOCAL_ASSET_CONTENT, ...MOVIES];
+
+export const ALL_CONTENT: ContentItem[] = [...LIBRARY_MOVIES, ...SERIES];
 
 const CONTINUE_WATCHING = [
   { itemId: 'ser-1', progress: 65, episode: 'S2:E3', season: 2, episodeNum: 3 },
@@ -424,7 +428,7 @@ const CONTINUE_WATCHING = [
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 type SortOption = 'recommended' | 'newest' | 'top-rated';
-type Genre = 'All' | 'Action' | 'Sci-Fi' | 'Drama' | 'Thriller' | 'Comedy';
+type Genre = 'All' | 'Action' | 'Sci-Fi' | 'Drama' | 'Thriller' | 'Comedy' | 'Animation' | 'Fantasy';
 
 const deduped = (items: ContentItem[]): ContentItem[] => {
   const seenIds = new Set<string>();
@@ -467,20 +471,19 @@ export default function App() {
   const [selectedItem, setSelectedItem] = useState<ContentItem | null>(null);
   const [playingItem, setPlayingItem] = useState<ContentItem | null>(null);
   const [myList, setMyList] = useState<ContentItem[]>([]);
-  const [likedItems, setLikedItems] = useState<string[]>([]);
-  const [watchHistory, setWatchHistory] = useState<ContentItem[]>([]);
-  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
-  const [isTabLoading, setIsTabLoading] = useState(false);
-  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem('netflix-onboarded'));
-  const [preferredGenres, setPreferredGenres] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem('netflix-preferred-genres') || '[]'); } catch { return []; }
-  });
+  const [continueWatchingItems, setContinueWatchingItems] = useState<WatchProgress[]>(CONTINUE_WATCHING);
   const [searchQuery, setSearchQuery] = useState('');
   const [autoplayEnabled, setAutoplayEnabled] = useState(true);
   const [selectedGenre, setSelectedGenre] = useState<Genre>('All');
   const [sortOption, setSortOption] = useState<SortOption>('recommended');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isTabLoading, setIsTabLoading] = useState(false);
+  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
+  const [preferredGenres, setPreferredGenres] = useState<string[]>([]);
+  const [watchHistory, setWatchHistory] = useState<ContentItem[]>([]);
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
 
   const isInMyList = (id: string) => myList.some(i => i.id === id);
   const addToList = (item: ContentItem) => {
@@ -488,49 +491,51 @@ export default function App() {
   };
   const removeFromList = (id: string) => setMyList(prev => prev.filter(i => i.id !== id));
 
-  const isLiked = (id: string) => likedItems.includes(id);
+  const dismissItem = (id: string) => {
+    setDismissedIds(prev => [...prev, id]);
+  };
+
+  const isLiked = (id: string) => likedItems.has(id);
   const toggleLike = (item: ContentItem) => {
-    setLikedItems(prev => prev.includes(item.id) ? prev.filter(id => id !== item.id) : [...prev, item.id]);
-  };
-
-  const playItem = (item: ContentItem) => {
-    setPlayingItem(item);
-    setWatchHistory(prev => [item, ...prev.filter(i => i.id !== item.id)].slice(0, 10));
-  };
-
-  const isDismissed = (id: string) => dismissedIds.includes(id);
-  const dismissItem = (id: string) => setDismissedIds(prev => [...prev, id]);
-
-  // Global ? key → keyboard help
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === '?' && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {
-        setShowKeyboardHelp(p => !p);
+    const id = item.id;
+    setLikedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
       }
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, []);
+      return newSet;
+    });
+  };
 
-  // Global Ctrl/Cmd + Backspace → clear active search results quickly
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      const isClearShortcut = (e.ctrlKey || e.metaKey) && e.key === 'Backspace';
-      if (!isClearShortcut || !searchQuery.trim()) return;
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement ||
-        (e.target instanceof HTMLElement && e.target.isContentEditable)
-      ) return;
+  const addToContinueWatching = (item: ContentItem, progress = 5) => {
+    setContinueWatchingItems(prev => {
+      const existing = prev.find(entry => entry.itemId === item.id);
+      const nextEntry: WatchProgress = {
+        itemId: item.id,
+        progress: existing ? Math.max(existing.progress, progress) : progress,
+        episode: item.type === 'series' ? (existing?.episode ?? 'S1:E1') : undefined,
+        season: item.type === 'series' ? (existing?.season ?? 1) : undefined,
+        episodeNum: item.type === 'series' ? (existing?.episodeNum ?? 1) : undefined,
+      };
 
-      e.preventDefault();
-      setSearchQuery('');
-      showToast('Search cleared', 'info');
-    };
+      return [
+        nextEntry,
+        ...prev.filter(entry => entry.itemId !== item.id),
+      ].slice(0, 12);
+    });
+  };
 
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [searchQuery, showToast]);
+  const handleItemClick = (item: ContentItem) => {
+    addToContinueWatching(item);
+    setSelectedItem(item);
+  };
+
+  const handlePlayClick = (item: ContentItem) => {
+    addToContinueWatching(item, 10);
+    setPlayingItem(item);
+  };
 
   const handleTabChange = (tab: typeof activeTab) => {
     if (tab === activeTab) return;
@@ -591,6 +596,8 @@ export default function App() {
     });
   }, [selectedGenre, sortOption, trendingNow, preferredGenres, dismissedIds, watchHistory]);
 
+  const localAssetsRow = useMemo(() => LOCAL_ASSET_CONTENT.slice(0, 18), []);
+
   const topRated = useMemo(() => {
     const usedIds = new Set([
       ALL_CONTENT[0].id,
@@ -605,22 +612,21 @@ export default function App() {
 
   // Tab-specific lists
   const moviesFiltered = useMemo(() =>
-    deduped(sortItems(filterByGenre(MOVIES, selectedGenre), sortOption)),
+    deduped(sortItems(filterByGenre(LIBRARY_MOVIES, selectedGenre), sortOption)),
   [selectedGenre, sortOption]);
 
   const seriesFiltered = useMemo(() =>
     deduped(sortItems(filterByGenre(SERIES, selectedGenre), sortOption)),
   [selectedGenre, sortOption]);
 
-  const featuredItem = ALL_CONTENT[0];
-  const continueWatchingItems: WatchProgress[] = CONTINUE_WATCHING;
+  const featuredItem = MOVIES[0];
 
   const commonProps = {
-    onItemClick: setSelectedItem,
+    onItemClick: handleItemClick,
     onAddToList: addToList,
     onRemoveFromList: removeFromList,
     isInMyList,
-    onPlayClick: playItem,
+    onPlayClick: handlePlayClick,
     autoplayEnabled,
     viewMode,
     onDismiss: dismissItem,
@@ -671,33 +677,50 @@ export default function App() {
               <>
                 <Hero
                   item={featuredItem}
-                  onPlay={() => playItem(featuredItem)}
-                  onMoreInfo={() => setSelectedItem(featuredItem)}
+                  onPlay={() => handlePlayClick(featuredItem)}
+                  onMoreInfo={() => handleItemClick(featuredItem)}
                   autoplayEnabled={autoplayEnabled}
                   onAddToList={addToList}
                   onRemoveFromList={removeFromList}
                   isInMyList={isInMyList}
                 />
                 <div className="px-4 md:px-8 pb-12 space-y-10 pt-8" style={{ background: 'var(--bg-primary)' }}>
-                  <FilterBar
-                    selectedGenre={selectedGenre}
-                    onGenreChange={g => setSelectedGenre(g as Genre)}
-                    sortOption={sortOption}
-                    onSortChange={s => setSortOption(s as SortOption)}
-                    viewMode={viewMode}
-                    onViewModeChange={setViewMode}
-                    resultCount={recommendedForYou.length}
-                  />
+                  <div className="flex justify-end">
+                    <div role="group" aria-label="Home view mode" className="flex gap-1">
+                      <button
+                        onClick={() => setViewMode('grid')}
+                        aria-pressed={viewMode === 'grid'}
+                        aria-label="Grid view"
+                        className="p-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2"
+                        style={viewMode === 'grid'
+                          ? { background: 'var(--chip-active-bg)', color: 'var(--chip-active-text)', '--tw-ring-color': 'var(--border-focus)' } as React.CSSProperties
+                          : { background: 'transparent', color: 'var(--text-muted)', '--tw-ring-color': 'var(--border-focus)' } as React.CSSProperties
+                        }
+                      >
+                        <LayoutGrid size={16} aria-hidden="true" />
+                      </button>
+                      <button
+                        onClick={() => setViewMode('list')}
+                        aria-pressed={viewMode === 'list'}
+                        aria-label="List view"
+                        className="p-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2"
+                        style={viewMode === 'list'
+                          ? { background: 'var(--chip-active-bg)', color: 'var(--chip-active-text)', '--tw-ring-color': 'var(--border-focus)' } as React.CSSProperties
+                          : { background: 'transparent', color: 'var(--text-muted)', '--tw-ring-color': 'var(--border-focus)' } as React.CSSProperties
+                        }
+                      >
+                        <List size={16} aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
                   <ContinueWatching
                     items={continueWatchingItems}
                     allContent={ALL_CONTENT}
-                    onItemClick={setSelectedItem}
-                    onPlayClick={playItem}
+                    onItemClick={handleItemClick}
+                    onPlayClick={handlePlayClick}
                   />
-                  {watchHistory.length > 0 && (
-                    <ContentSection title="Recently Watched" items={watchHistory} {...commonProps} onPlayClick={playItem} />
-                  )}
-                  <ContentSection title="Trending Now" items={trendingNow} {...commonProps} onPlayClick={playItem} />
+                  <ContentSection title="Your Favorites" items={localAssetsRow} {...commonProps} />
+                  <ContentSection title="Trending Now" items={trendingNow} {...commonProps} />
                   <ContentSection title="Recommended For You" items={recommendedForYou} {...commonProps} viewMode={viewMode} />
                   <ContentSection title="Top Rated" items={topRated} {...commonProps} />
                 </div>
@@ -765,8 +788,8 @@ export default function App() {
         isLiked={isLiked}
         onToggleLike={toggleLike}
         moreLikeThis={getMoreLikeThis(selectedItem)}
-        onItemClick={setSelectedItem}
-        onPlayClick={playItem}
+        onItemClick={handleItemClick}
+        onPlayClick={handlePlayClick}
         autoplayEnabled={autoplayEnabled}
       />
 
