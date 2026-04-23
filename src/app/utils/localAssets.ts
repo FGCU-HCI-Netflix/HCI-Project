@@ -111,15 +111,15 @@ function getGenre(title: string): ContentItem['genre'] {
   const normalizedTitle = title.toLowerCase();
 
   if (/cowboy bebop/.test(normalizedTitle)) return 'Action';
-  if (/(neptune|egyptian|goddess|halloween|skeleton|mother goose|wynken|merbabies|pied piper|hiawatha)/.test(normalizedTitle)) return 'Fantasy';
-  if (/(night|hell|midnight|spider|moth|old mill|broken|ugly duckling|wolf|wolves|robin|toreador)/.test(normalizedTitle)) return 'Thriller';
-  if (/(spring|summer|autumn|winter|flowers|trees|arctic|water babies|farmyard|woodland|birds|duckling|fish|tortoise|hare|capers|penguins)/.test(normalizedTitle)) return 'Animation';
-  if (/(love|lullaby|orphan|babies|mother|country cousin|little hen|practical pig|elephant|grasshopper|ants|beavers)/.test(normalizedTitle)) return 'Drama';
-  if (/(clock|toyshop|china|golden|music land|flying|future|bebop)/.test(normalizedTitle)) return 'Sci-Fi';
-  if (/(funny|playful|merry|bunnies|cookies|pigs|cock o' the walk|just dogs|robber kitten)/.test(normalizedTitle)) return 'Comedy';
+  if (/(neptune|egyptian|goddess|halloween|skeleton|mother goose|wynken|merbabies|pied piper|hiawatha|spring|noah)/.test(normalizedTitle)) return 'Fantasy';
+  if (/(night|hell|midnight|spider|moth|old mill|broken|ugly duckling|wolf|wolves|robin|toreador|cock robin)/.test(normalizedTitle)) return 'Thriller';
+  if (/(summer|autumn|winter|flowers|trees|arctic|water babies|farmyard|woodland|birds|fish|tortoise|hare|capers|penguins|fox hunt|shop|carousel|kittens|mousketeers)/.test(normalizedTitle)) return 'Animation';
+  if (/(love|lullaby|orphan|babies|mother|country cousin|little hen|practical pig|elephant|grasshopper|ants|bears|bees|beavers|busy|bull|goose|robin|chef)/.test(normalizedTitle)) return 'Drama';
+  if (/(clock|toyshop|china|golden|music land|flying|future|bebop|dance|tango|symphony|carnival|shop)/.test(normalizedTitle)) return 'Sci-Fi';
+  if (/(funny|playful|merry|bunnies|cookies|pigs|cock o' the walk|just dogs|robber kitten|laughs|laugh)/.test(normalizedTitle)) return 'Comedy';
 
-  const fallbackGenres: ContentItem['genre'][] = ['Action', 'Drama', 'Sci-Fi', 'Animation', 'Thriller', 'Comedy'];
-  return fallbackGenres[hashString(title) % fallbackGenres.length];
+  // Ensure every item gets a genre - Animation is the safe default for classic cartoons
+  return 'Animation';
 }
 
 function getBadge(index: number): ContentItem['badge'] | undefined {
