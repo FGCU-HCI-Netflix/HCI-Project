@@ -228,8 +228,17 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
           onClick={e => {
             e.stopPropagation();
             if (videoRef.current) {
-              videoRef.current.currentTime = 30;
-              setCurrentTime(30);
+              // If video is shorter than 30 seconds, seek to end and pause
+              if (videoRef.current.duration < 30) {
+                videoRef.current.currentTime = videoRef.current.duration;
+                setCurrentTime(videoRef.current.duration);
+                videoRef.current.pause();
+                setIsPlaying(false);
+              } else {
+                // Otherwise, skip to 30 seconds
+                videoRef.current.currentTime = 30;
+                setCurrentTime(30);
+              }
             }
             setShowSkipIntro(false);
           }}
