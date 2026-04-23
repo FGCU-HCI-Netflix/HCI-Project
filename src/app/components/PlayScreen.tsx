@@ -236,10 +236,17 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
               setIsSeeking(true);
               // If video is shorter than 30 seconds, seek to end and pause
               if (videoRef.current.duration < 30) {
-                videoRef.current.currentTime = videoRef.current.duration;
-                setCurrentTime(videoRef.current.duration);
-                videoRef.current.pause();
+                const video = videoRef.current;
+                video.currentTime = video.duration;
+                setCurrentTime(video.duration);
+                // Ensure pause happens after seek completes
+                video.pause();
                 setIsPlaying(false);
+                // Force pause again after a short delay to ensure it sticks
+                setTimeout(() => {
+                  video.pause();
+                  setIsPlaying(false);
+                }, 50);
               } else {
                 // Otherwise, skip to 30 seconds
                 videoRef.current.currentTime = 30;
