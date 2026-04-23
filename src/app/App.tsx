@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { LayoutGrid, List } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
@@ -485,6 +485,18 @@ export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
 
+  // Keyboard handler for opening help panel with ? key
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === '?') {
+        e.preventDefault();
+        setShowKeyboardHelp(prev => !prev);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
   const isInMyList = (id: string) => myList.some(i => i.id === id);
   const addToList = (item: ContentItem) => {
     if (!isInMyList(item.id)) setMyList(prev => [...prev, item]);
@@ -553,13 +565,30 @@ export default function App() {
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
-    return deduped(ALL_CONTENT.filter(c =>
-      c.title.toLowerCase().includes(q) ||
-      c.genre.toLowerCase().includes(q) ||
-      String(c.year).includes(q) ||
-      (c.director?.toLowerCase().includes(q)) ||
-      c.cast?.some(m => m.name.toLowerCase().includes(q))
-    ));
+    return deduped(ALL_CONTENT.filter(c => {
+      try {
+        // Check required fields first
+        if (c.title?.toLowerCase().includes(q)) return true;
+        if (c.genre?.toLowerCase().includes(q)) return true;
+        if (String(c.year || '').includes(q)) return true;
+
+        // Check optional fields with safe chaining
+        if (c.description && c.description.toLowerCase().includes(q)) return true;
+        if (c.director && c.director.toLowerCase().includes(q)) return true;
+
+        // Check cast array safely
+        if (Array.isArray(c.cast) && c.cast.length > 0) {
+          if (c.cast.some(m => m && m.name && m.name.toLowerCase().includes(q))) {
+            return true;
+          }
+        }
+
+        return false;
+      } catch {
+        // If any error occurs during filtering, skip this item
+        return false;
+      }
+    }));
   }, [searchQuery]);
 
   // Home sections — all respect selectedGenre and dismissedIds
