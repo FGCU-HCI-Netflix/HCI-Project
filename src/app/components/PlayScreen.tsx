@@ -25,6 +25,7 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
   const [urlIndex, setUrlIndex] = useState(0);
   const [showSkipIntro, setShowSkipIntro] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
+  const [isSeeking, setIsSeeking] = useState(false);
 
   const videoUrls = useMemo(() => [
     getVideoForItem(item.id),
@@ -161,7 +162,10 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
         onPlaying={() => { setIsLoading(false); setIsPlaying(true); }}
         onTimeUpdate={e => {
           const t = e.currentTarget.currentTime;
-          setCurrentTime(t);
+          // Don't update currentTime while seeking to prevent race conditions
+          if (!isSeeking) {
+            setCurrentTime(t);
+          }
           setShowSkipIntro(t >= 3 && t < 30);
         }}
         onLoadedMetadata={e => setDuration(e.currentTarget.duration)}
@@ -229,6 +233,7 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
             e.preventDefault();
             e.stopPropagation();
             if (videoRef.current) {
+              setIsSeeking(true);
               // If video is shorter than 30 seconds, seek to end and pause
               if (videoRef.current.duration < 30) {
                 videoRef.current.currentTime = videoRef.current.duration;
@@ -240,6 +245,8 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
                 videoRef.current.currentTime = 30;
                 setCurrentTime(30);
               }
+              // Clear seeking flag after seek completes
+              setTimeout(() => setIsSeeking(false), 100);
             }
             setShowSkipIntro(false);
           }}
