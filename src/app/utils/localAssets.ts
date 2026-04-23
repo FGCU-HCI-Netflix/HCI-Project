@@ -159,14 +159,12 @@ function buildVideoUrl(fileName: string): string | undefined {
   return `${localMediaBaseUrl}/${encodeURIComponent(fileName)}`;
 }
 
-export const LOCAL_ASSET_CONTENT: ContentItem[] = LOCAL_ASSET_FILES.map((assetFile, index): ContentItem | null => {
+export const LOCAL_ASSET_CONTENT: ContentItem[] = LOCAL_ASSET_FILES.map((assetFile, index): ContentItem => {
   const fileName = decodeFileName(assetFile);
   const title = normalizeTitle(fileName);
   const year = extractYear(fileName);
   const accentHue = Math.abs(hashString(fileName)) % 360;
   const videoSrc = buildVideoUrl(assetFile);
-
-  if (!videoSrc) return null;
 
   return {
     id: `asset-${index + 1}`,
@@ -181,9 +179,9 @@ export const LOCAL_ASSET_CONTENT: ContentItem[] = LOCAL_ASSET_FILES.map((assetFi
     maturityRating: 'NR',
     reason: 'From your local assets',
     badge: getBadge(index),
-    videoSrc,
+    ...(videoSrc && { videoSrc }),
   };
-}).filter((item): item is ContentItem => item !== null);
+});
 
 export const localAssetVideoMap = Object.fromEntries(
   LOCAL_ASSET_CONTENT.map(item => [item.id, item.videoSrc as string]),
