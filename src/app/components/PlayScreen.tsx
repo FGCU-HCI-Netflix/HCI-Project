@@ -222,7 +222,10 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
         <button
           onClick={e => {
             e.stopPropagation();
-            if (videoRef.current) videoRef.current.currentTime = 30;
+            if (videoRef.current) {
+              videoRef.current.currentTime = 30;
+              setCurrentTime(30);
+            }
             setShowSkipIntro(false);
           }}
           className="absolute bottom-24 right-6 px-5 py-2.5 rounded border-2 font-semibold text-sm text-white transition-all hover:bg-white hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
