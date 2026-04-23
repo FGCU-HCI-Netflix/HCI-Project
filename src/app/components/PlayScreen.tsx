@@ -226,6 +226,7 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
       {showSkipIntro && (
         <button
           onClick={e => {
+            e.preventDefault();
             e.stopPropagation();
             if (videoRef.current) {
               // If video is shorter than 30 seconds, seek to end and pause
@@ -243,7 +244,7 @@ export function PlayScreen({ item, onClose }: PlayScreenProps) {
             setShowSkipIntro(false);
           }}
           className="absolute bottom-24 right-6 px-5 py-2.5 rounded border-2 font-semibold text-sm text-white transition-all hover:bg-white hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-          style={{ background: 'rgba(0,0,0,0.7)', borderColor: 'rgba(255,255,255,0.8)', zIndex: 10 }}
+          style={{ background: 'rgba(0,0,0,0.7)', borderColor: 'rgba(255,255,255,0.8)', zIndex: 50, pointerEvents: 'auto' }}
           aria-label="Skip intro"
         >
           Skip Intro
