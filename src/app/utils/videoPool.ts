@@ -22,7 +22,7 @@ export const videoPool = [
 // Always-available fallbacks tried last before giving up.
 export const fallbackVideos = [
   'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-  'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+  'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/friday.mp4',
 ];
 
 // Deterministic hash so each item always gets the same video.

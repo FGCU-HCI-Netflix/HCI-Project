@@ -184,5 +184,5 @@ export const LOCAL_ASSET_CONTENT: ContentItem[] = LOCAL_ASSET_FILES.map((assetFi
 });
 
 export const localAssetVideoMap = Object.fromEntries(
-  LOCAL_ASSET_CONTENT.map(item => [item.id, item.videoSrc as string]),
+  LOCAL_ASSET_CONTENT.map(item => [item.id, item.videoSrc]).filter(([_, src]) => src),
 );
