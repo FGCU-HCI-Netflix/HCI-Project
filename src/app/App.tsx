@@ -721,34 +721,22 @@ export default function App() {
                   isInMyList={isInMyList}
                 />
                 <div className="px-4 md:px-8 pb-12 space-y-10 pt-8" style={{ background: 'var(--bg-primary)' }}>
-                  <div className="flex justify-end">
-                    <div role="group" aria-label="Home view mode" className="flex gap-1">
-                      <button
-                        onClick={() => setViewMode('grid')}
-                        aria-pressed={viewMode === 'grid'}
-                        aria-label="Grid view"
-                        className="p-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2"
-                        style={viewMode === 'grid'
-                          ? { background: 'var(--chip-active-bg)', color: 'var(--chip-active-text)', '--tw-ring-color': 'var(--border-focus)' } as React.CSSProperties
-                          : { background: 'transparent', color: 'var(--text-muted)', '--tw-ring-color': 'var(--border-focus)' } as React.CSSProperties
-                        }
-                      >
-                        <LayoutGrid size={16} aria-hidden="true" />
-                      </button>
-                      <button
-                        onClick={() => setViewMode('list')}
-                        aria-pressed={viewMode === 'list'}
-                        aria-label="List view"
-                        className="p-1.5 rounded transition-colors focus-visible:outline-none focus-visible:ring-2"
-                        style={viewMode === 'list'
-                          ? { background: 'var(--chip-active-bg)', color: 'var(--chip-active-text)', '--tw-ring-color': 'var(--border-focus)' } as React.CSSProperties
-                          : { background: 'transparent', color: 'var(--text-muted)', '--tw-ring-color': 'var(--border-focus)' } as React.CSSProperties
-                        }
-                      >
-                        <List size={16} aria-hidden="true" />
-                      </button>
-                    </div>
-                  </div>
+                  <FilterBar
+                  selectedGenre={selectedGenre}
+                  onGenreChange={g => setSelectedGenre(g as Genre)}
+                  sortOption={sortOption}
+                  onSortChange={s => setSortOption(s as SortOption)}
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  resultCount={
+                    new Set([
+                      ...localAssetsRow.map(c => c.id),
+                      ...trendingNow.map(c => c.id),
+                      ...recommendedForYou.map(c => c.id),
+                      ...topRated.map(c => c.id),
+                    ]).size
+                  }
+                />
                   <ContinueWatching
                     items={continueWatchingItems}
                     allContent={ALL_CONTENT}
