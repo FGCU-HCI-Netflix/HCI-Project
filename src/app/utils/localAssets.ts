@@ -80,6 +80,8 @@ const LOCAL_ASSET_FILES = [
 ] as const;
 
 const configuredMediaBaseUrl = (import.meta.env.VITE_LOCAL_MEDIA_BASE_URL ?? '').trim().replace(/\/+$/, '');
+// On production (Vercel), use empty string since Git LFS files aren't available
+// Local videos work fine on localhost during development
 const localMediaBaseUrl = configuredMediaBaseUrl || (import.meta.env.DEV ? '/src/Assets' : '');
 
 function hashString(value: string): number {
@@ -109,10 +111,10 @@ function getGenre(title: string): ContentItem['genre'] {
   const normalizedTitle = title.toLowerCase();
 
   if (/cowboy bebop/.test(normalizedTitle)) return 'Action';
-  if (/(neptune|egyptian|goddess|halloween|skeleton|mother goose|wynken|merbabies)/.test(normalizedTitle)) return 'Fantasy';
-  if (/(night|hell|midnight|spider|moth|old mill|broken|ugly duckling|wolf|wolves)/.test(normalizedTitle)) return 'Thriller';
-  if (/(spring|summer|autumn|winter|flowers|trees|arctic|water babies|farmyard|woodland|birds|duckling)/.test(normalizedTitle)) return 'Animation';
-  if (/(love|lullaby|orphan|babies|mother|country cousin|little hen|practical pig|elephant)/.test(normalizedTitle)) return 'Drama';
+  if (/(neptune|egyptian|goddess|halloween|skeleton|mother goose|wynken|merbabies|pied piper|hiawatha)/.test(normalizedTitle)) return 'Fantasy';
+  if (/(night|hell|midnight|spider|moth|old mill|broken|ugly duckling|wolf|wolves|robin|toreador)/.test(normalizedTitle)) return 'Thriller';
+  if (/(spring|summer|autumn|winter|flowers|trees|arctic|water babies|farmyard|woodland|birds|duckling|fish|tortoise|hare|capers|penguins)/.test(normalizedTitle)) return 'Animation';
+  if (/(love|lullaby|orphan|babies|mother|country cousin|little hen|practical pig|elephant|grasshopper|ants|beavers)/.test(normalizedTitle)) return 'Drama';
   if (/(clock|toyshop|china|golden|music land|flying|future|bebop)/.test(normalizedTitle)) return 'Sci-Fi';
   if (/(funny|playful|merry|bunnies|cookies|pigs|cock o' the walk|just dogs|robber kitten)/.test(normalizedTitle)) return 'Comedy';
 
