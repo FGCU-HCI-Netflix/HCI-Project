@@ -64,8 +64,6 @@ export function ContentSection({
     setFocusVideoUrlIndex(0);
   }, [title, items, viewMode]);
 
-  if (items.length === 0) return null;
-
   const sectionId = `section-${title.replace(/\s+/g, '-').toLowerCase() || 'content'}`;
   const visibleCount = columns * visibleRows;
   const displayedItems = viewMode === 'grid' ? items.slice(0, visibleCount) : items;
@@ -77,9 +75,13 @@ export function ContentSection({
 
   // Update focus card video URL when activeIndex changes
   useEffect(() => {
+    if (!activeItem?.id) return;
     const videoUrls = [getVideoForItem(activeItem.id), ...fallbackVideos];
     setFocusVideoUrl(videoUrls[focusVideoUrlIndex]);
-  }, [activeIndex, focusVideoUrlIndex, activeItem.id]);
+  }, [activeIndex, focusVideoUrlIndex, activeItem?.id]);
+
+  // Early return after all hooks have been called
+  if (items.length === 0) return null;
 
   const showFocusedToggle = viewMode === 'grid' && title;
 
