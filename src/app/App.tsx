@@ -555,7 +555,7 @@ export default function App() {
     setTimeout(() => {
       setActiveTab(tab);
       setSearchQuery('');
-      setSelectedGenre('All');
+      // Don't reset genre - user may have selected it
       setSortOption('recommended');
       setIsTabLoading(false);
     }, 300);
