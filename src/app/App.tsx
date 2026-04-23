@@ -625,7 +625,14 @@ export default function App() {
     });
   }, [selectedGenre, sortOption, trendingNow, preferredGenres, dismissedIds, watchHistory]);
 
-  const localAssetsRow = useMemo(() => LOCAL_ASSET_CONTENT.slice(0, 18), []);
+  const localAssetsRow = useMemo(() => {
+    const usedIds = new Set([
+      ALL_CONTENT[0].id,
+      ...trendingNow.map(c => c.id),
+      ...recommendedForYou.map(c => c.id),
+    ]);
+    return LOCAL_ASSET_CONTENT.filter(c => !usedIds.has(c.id)).slice(0, 18);
+  }, [trendingNow, recommendedForYou]);
 
   const topRated = useMemo(() => {
     const usedIds = new Set([
